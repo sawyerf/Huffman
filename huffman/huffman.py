@@ -3,13 +3,14 @@ from tools.heap import Heap
 import binascii
 
 class Huffman():
-	def __init__(self, data):
-		self.tree = BinTree(None, None, None)
+	def __init__(self, data="", tree="", e_data="", e_tree=""):
+		#encode
+		self.tree = None
 		self.data = data
-		self.e_tree = ""
-		self.e_data = ""
-		self.l_occ = 0
-		print("len data: ", len(bin(int(binascii.hexlify(data.encode()), 16))))
+		#decode
+		self.e_tree = e_tree
+		self.e_data = e_data
+		#print("len data: ", len(bin(int(binascii.hexlify(data.encode()), 16))))
 
 	def occ(self):
 		d_occ = dict()
@@ -18,31 +19,47 @@ class Huffman():
 				d_occ[l] += 1
 			except:
 				d_occ[l] = 1
-		self.l_occ = len(d_occ)
-		self.d_occ =  dict()
+		self.l_tree = []
 		for l in d_occ:
-			try:
-				self.d_occ[d_occ[l]].append(l)
-			except:
-				self.d_occ[d_occ[l]] = [l]
+			self.l_tree.append(BinTree(l, None, None, d_occ[l]))
+
+	def min_ltree(self):
+		if len(self.l_tree) < 2:
+			return None
+		min1 = self.l_tree[0]
+		min2 = self.l_tree[1]
+		for i in self.l_tree:
+			if min1.prob > i.prob:
+				min2 = min1
+				min1 = i
+		return min1, min2
+
+	def d_create_tree(self, e_tree, tree):
+		if e_tree and e_tree[0] == "0":
+			tree.left = BinTree(None, None, None, 0)
+			e_tree = self.d_create_tree(e_tree[1:], tree.left)
+			tree.right = BinTree(None, None, None, 0)
+			e_tree = self.d_create_tree(e_tree, tree.right)
+			return e_tree
+		if e_tree and e_tree[0] == "1":
+			tree.key = chr(int(e_tree[1:9], 2))
+			if len(e_tree[9:]) == 0:
+				return None
+			return e_tree[9:]
+		return e_tree
 
 	def create_tree(self):
-		tree = self.tree
-		i = 0
-		for n in sorted(list(self.d_occ), reverse=True):
-			for l in self.d_occ[n]:
-				i += 1
-				if self.l_occ > i:
-					tree.left = BinTree(l, None, None)
-					tree.right = BinTree(None, None, None)
-					tree = tree.right
-				else:
-					tree.key = l
+		while len(self.l_tree) > 1:
+			min1, min2 = self.min_ltree()
+			self.l_tree.append(BinTree(None, min1, min2, min1.prob + min2.prob))
+			self.l_tree.remove(min1)
+			self.l_tree.remove(min2)
+		self.tree = self.l_tree[0]
 
 	def encode_tree(self, tree):
 		if tree.key:
 			self.e_tree += "1"
-			self.e_tree += " {:08b} ".format(ord(tree.key))
+			self.e_tree += "{:08b}".format(ord(tree.key))
 			return
 		if tree.left:
 			self.e_tree += "0"
@@ -67,14 +84,35 @@ class Huffman():
 		for l in self.data:
 			self.e_data += self.search_letter(l, self.tree)
 
+	def decode_data(self):
+		tree = self.tree
+		for l in self.e_data:
+			if tree.key != None:
+				self.data += tree.key
+				tree = self.tree
+			if l == "0":
+				tree = tree.left
+			elif l == "1":
+				tree = tree.right
+
 	def encrypt(self):
+		print(self.data)
 		occ = self.occ()
-		print("occ: ", self.d_occ)
 		self.create_tree()
 		self.encode_tree(self.tree)
-		print("encode tree: ", self.e_tree)
+		self.tree.display()
 		self.encode_data()
-		print("encode data: ", len(self.e_data))
+		return (self.e_tree, self.e_data)
+	
+	def decrypt(self):
+		self.tree = BinTree(None, None, None, 0)
+		self.d_create_tree(self.e_tree, self.tree)
+		self.tree.display()
+		self.decode_data()
+		print(self.data)
 
 huff = Huffman("Article nor prepare chicken you him now. Shy merits say advice ten before lovers innate add. She cordially behaviour can attempted estimable. Trees delay fancy noise manor do as an small. Felicity now law securing breeding likewise extended and. Roused either who favour why ham. ")
-huff.encrypt()
+tu = huff.encrypt()
+
+de = Huffman(e_tree=tu[0], e_data=tu[1])
+de.decrypt()
