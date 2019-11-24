@@ -1,16 +1,41 @@
 from tools.bintree import BinTree
 from tools.heap import Heap
 import binascii
+import sys
+
+def btoa(e_str):
+	if e_str == "":
+		return ""
+	ret = str(8 - (len(e_str) % 8))
+	if ret == "8":
+		ret = "0"
+	while len(e_str) % 8 > 0:
+		e_str += "0"
+	while e_str != "":
+		ret += chr(int(e_str[:8], 2))
+		e_str = e_str[8:]
+	return ret
+
+def atob(s):
+	ret = ""
+	if s == "":
+		return ""
+	end = (len(s) * 8) - int(s[0]) - 8
+	s = s[1:]
+	for i in s:
+		ret += "{:08b}".format(ord(i))
+	ret = ret[:end]
+	return ret
 
 class Huffman():
 	def __init__(self, data="", tree="", e_data="", e_tree=""):
-		#encode
-		self.tree = None
+		#encode self.tree = None
 		self.data = data
 		#decode
-		self.e_tree = e_tree
-		self.e_data = e_data
-		#print("len data: ", len(bin(int(binascii.hexlify(data.encode()), 16))))
+		#print("0 tree:", e_tree)
+		#print("0 data:", e_data)
+		self.e_tree = atob(e_tree)
+		self.e_data = atob(e_data)
 
 	def occ(self):
 		d_occ = dict()
@@ -32,6 +57,8 @@ class Huffman():
 			if min1.prob > i.prob:
 				min2 = min1
 				min1 = i
+			elif min2.prob > i.prob and min1 != i:
+				min2 = i
 		return min1, min2
 
 	def d_create_tree(self, e_tree, tree):
@@ -48,7 +75,7 @@ class Huffman():
 			return e_tree[9:]
 		return e_tree
 
-	def create_tree(self):
+	def e_create_tree(self):
 		while len(self.l_tree) > 1:
 			min1, min2 = self.min_ltree()
 			self.l_tree.append(BinTree(None, min1, min2, min1.prob + min2.prob))
@@ -94,25 +121,35 @@ class Huffman():
 				tree = tree.left
 			elif l == "1":
 				tree = tree.right
+		if tree.key != None:
+			self.data += tree.key
+			tree = self.tree
 
 	def encrypt(self):
-		print(self.data)
-		occ = self.occ()
-		self.create_tree()
-		self.encode_tree(self.tree)
-		self.tree.display()
-		self.encode_data()
-		return (self.e_tree, self.e_data)
+		occ = self.occ() # occurence
+		self.e_create_tree() # generate tree
+		self.encode_tree(self.tree) # encode tree
+		self.tree.display() # print tree
+		self.encode_data() #  encode data
+		return (btoa(self.e_tree), btoa(self.e_data))
 	
 	def decrypt(self):
 		self.tree = BinTree(None, None, None, 0)
-		self.d_create_tree(self.e_tree, self.tree)
-		self.tree.display()
-		self.decode_data()
-		print(self.data)
+		self.d_create_tree(self.e_tree, self.tree) # recreate tree
+		self.tree.display() # print tree
+		self.decode_data() # decode data 
+		return self.data
 
-huff = Huffman("Article nor prepare chicken you him now. Shy merits say advice ten before lovers innate add. She cordially behaviour can attempted estimable. Trees delay fancy noise manor do as an small. Felicity now law securing breeding likewise extended and. Roused either who favour why ham. ")
+huff = Huffman(sys.argv[1])
 tu = huff.encrypt()
 
 de = Huffman(e_tree=tu[0], e_data=tu[1])
-de.decrypt()
+data = de.decrypt()
+print("---------------------------------------------")
+if data == sys.argv[1]:
+	print("OK")
+else:
+	print("NoooooooooooooooooooooooooooooooooooooooooooooooooooooooooooN")
+	print("data:",  sys.argv[1])
+	print("data:",  data)
+print((len(tu[1]) / (len(sys.argv[1]))) * 100)
