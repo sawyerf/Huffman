@@ -1,6 +1,6 @@
 from tools.bintree import BinTree
 from tools.heap import Heap
-import binascii
+import time
 import sys
 
 def btoa(e_str):
@@ -29,13 +29,13 @@ def atob(s):
 
 class Huffman():
 	def __init__(self, data="", tree="", e_data="", e_tree=""):
-		#encode self.tree = None
+		#encode
+		self.tree = None
 		self.data = data
 		#decode
-		#print("0 tree:", e_tree)
-		#print("0 data:", e_data)
 		self.e_tree = atob(e_tree)
 		self.e_data = atob(e_data)
+		self.d_path = dict()
 
 	def occ(self):
 		d_occ = dict()
@@ -94,34 +94,30 @@ class Huffman():
 		if tree.right:
 			self.encode_tree(tree.right)
 
-	def search_letter(self, letter, tree, path=""):
-		if tree.key == letter:
-			return path
-		elif tree.key != None:
-			return None
-		ret = None
+	def create_d_path(self, tree, path=""):
+		if tree.key:
+			self.d_path[tree.key] = path
+			return
 		if tree.left:
-			ret = self.search_letter(letter, tree.left, path + "0")
-		if ret == None and tree.right:
-			ret = self.search_letter(letter, tree.right, path + "1")
-		return ret
-
+			self.create_d_path(tree.left, path + "0")
+		if tree.right:
+			self.create_d_path(tree.right, path + "1")
 
 	def encode_data(self):
 		for l in self.data:
-			self.e_data += self.search_letter(l, self.tree)
+			self.e_data += self.d_path[l]
 
 	def decode_data(self):
 		tree = self.tree
 		for l in self.e_data:
-			if tree.key != None:
+			if tree.key:
 				self.data += tree.key
 				tree = self.tree
 			if l == "0":
 				tree = tree.left
 			elif l == "1":
 				tree = tree.right
-		if tree.key != None:
+		if tree.key:
 			self.data += tree.key
 			tree = self.tree
 
@@ -130,6 +126,7 @@ class Huffman():
 		self.e_create_tree() # generate tree
 		self.encode_tree(self.tree) # encode tree
 		self.tree.display() # print tree
+		self.create_d_path(self.tree)
 		self.encode_data() #  encode data
 		return (btoa(self.e_tree), btoa(self.e_data))
 	
@@ -140,16 +137,17 @@ class Huffman():
 		self.decode_data() # decode data 
 		return self.data
 
-huff = Huffman(sys.argv[1])
+f_data = open(sys.argv[1], 'r', encoding="utf-8").read()
+huff = Huffman(f_data)
 tu = huff.encrypt()
 
 de = Huffman(e_tree=tu[0], e_data=tu[1])
 data = de.decrypt()
 print("---------------------------------------------")
-if data == sys.argv[1]:
+if data == f_data:
 	print("OK")
 else:
 	print("NoooooooooooooooooooooooooooooooooooooooooooooooooooooooooooN")
-	print("data:",  sys.argv[1])
+	print("data:",  f_data)
 	print("data:",  data)
-print((len(tu[1]) / (len(sys.argv[1]))) * 100)
+print((len(tu[1]) / (len(f_data))) * 100)
