@@ -1,6 +1,5 @@
 from tools.bintree import BinTree
 from tools.heap import Heap
-import time
 import sys
 
 def btoa(e_str):
@@ -16,6 +15,14 @@ def btoa(e_str):
 		e_str = e_str[8:]
 	return ret
 
+def mypow(nb, i):
+	if i == 0:
+		return 1
+	ret = nb
+	for y in range(i - 1):
+		ret *= nb
+	return ret
+		
 def atob(s):
 	ret = ""
 	if s == "":
@@ -35,10 +42,10 @@ class Huffman():
 		#decode
 		self.e_tree = atob(e_tree)
 		self.e_data = atob(e_data)
-		self.d_path = dict()
+		self.d_path = {}
 
 	def occ(self):
-		d_occ = dict()
+		d_occ = {}
 		for l in self.data:
 			try:
 				d_occ[l] += 1
@@ -46,6 +53,8 @@ class Huffman():
 				d_occ[l] = 1
 		self.l_tree = []
 		for l in d_occ:
+			self.l_tree.append(BinTree(l, None, None, d_occ[l]))
+		if len(d_occ) == 1:
 			self.l_tree.append(BinTree(l, None, None, d_occ[l]))
 
 	def min_ltree(self):
@@ -96,7 +105,7 @@ class Huffman():
 
 	def create_d_path(self, tree, path=""):
 		if tree.key:
-			self.d_path[tree.key] = path
+			self.d_path[tree.key] = [int(path, 2), len(path)]
 			return
 		if tree.left:
 			self.create_d_path(tree.left, path + "0")
@@ -104,8 +113,41 @@ class Huffman():
 			self.create_d_path(tree.right, path + "1")
 
 	def encode_data(self):
+		self.e_data = ""
+		i = 0
+		let = 0
 		for l in self.data:
-			self.e_data += self.d_path[l]
+			if i == 8:
+				i = 0
+				#print("ad0: {:08b}".format(let))
+				self.e_data += chr(let)
+				let = 0
+			if i + self.d_path[l][1] > 8:
+				path = self.d_path[l][0]
+				lpath = self.d_path[l][1]
+				while i + lpath > 8:
+					po = mypow(2, lpath - (8 - i))
+					let += int(path / po)
+					self.e_data += chr(let)
+					#print("ad{}: {:08b} {:0{}b}".format(lpath, let, path, lpath))
+					path = path % po
+					lpath -= (8 - i)
+					let = 0
+					i = 0
+				if lpath:
+					po = mypow(2, 8 - lpath)
+					let += path * po
+					#print("ad1: {:08b} {:08b} {}".format(let, path, lpath))
+					i += lpath
+			else:
+				po = mypow(2, 8 - i - self.d_path[l][1])
+				let += self.d_path[l][0] * po
+				#print("trk: {:08b}".format(self.d_path[l][0] * po))
+				i += self.d_path[l][1]
+		if i > 0:
+			self.e_data += chr(let)
+		self.e_data = str(8 - i) + self.e_data
+		# print('"' +self.e_data + '"')
 
 	def decode_data(self):
 		tree = self.tree
@@ -128,7 +170,7 @@ class Huffman():
 		self.tree.display() # print tree
 		self.create_d_path(self.tree)
 		self.encode_data() #  encode data
-		return (btoa(self.e_tree), btoa(self.e_data))
+		return (btoa(self.e_tree), self.e_data)
 	
 	def decrypt(self):
 		self.tree = BinTree(None, None, None, 0)
@@ -137,7 +179,10 @@ class Huffman():
 		self.decode_data() # decode data 
 		return self.data
 
-f_data = open(sys.argv[1], 'r', encoding="utf-8").read()
+try:
+	f_data = open(sys.argv[1], 'r', encoding="utf-8").read()
+except:
+	f_data = sys.argv[1]
 huff = Huffman(f_data)
 tu = huff.encrypt()
 
@@ -148,6 +193,6 @@ if data == f_data:
 	print("OK")
 else:
 	print("NoooooooooooooooooooooooooooooooooooooooooooooooooooooooooooN")
-	print("data:",  f_data)
-	print("data:",  data)
+	#print("data:",  f_data)
+	#print("data:",  data)
 print((len(tu[1]) / (len(f_data))) * 100)
