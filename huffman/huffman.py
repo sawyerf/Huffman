@@ -46,6 +46,9 @@ class Huffman():
 		self.d_path = {}
 
 	def occ(self):
+		'''
+		Crée une liste avec chaque lettre et son nombre d'occurences.
+		'''
 		d_occ = {}
 		for l in self.data:
 			try:
@@ -72,6 +75,9 @@ class Huffman():
 		return min1, min2
 
 	def d_create_tree(self, e_tree, tree):
+		'''
+		Crée l'abre à partir de la clé fourni (self.e_tree).
+		'''
 		if e_tree and e_tree[0] == "0":
 			tree.left = BinTree(None, None, None, 0)
 			e_tree = self.d_create_tree(e_tree[1:], tree.left)
@@ -86,6 +92,9 @@ class Huffman():
 		return e_tree
 
 	def e_create_tree(self):
+		'''
+		Crée l'abre a partir de self.l_tree.
+		'''
 		while len(self.l_tree) > 1:
 			min1, min2 = self.min_ltree()
 			self.l_tree.append(BinTree(None, min1, min2, min1.prob + min2.prob))
@@ -94,6 +103,9 @@ class Huffman():
 		self.tree = self.l_tree[0]
 
 	def encode_tree(self, tree):
+		'''
+		Crée la clé de l'arbre.
+		'''
 		if tree.key:
 			self.e_tree += "1"
 			self.e_tree += "{:08b}".format(ord(tree.key))
@@ -114,6 +126,9 @@ class Huffman():
 			self.create_d_path(tree.right, path + "1")
 
 	def encode_data(self):
+		'''
+		Encrypte le message fourni (self.data).
+		'''
 		i = 0
 		let = 0
 		y = 0
@@ -146,15 +161,18 @@ class Huffman():
 		self.e_data = str(8 - i) + self.e_data
 
 	def decode_data(self):
-		 tree = self.tree
-		 for l in self.e_data:
-		 	if l == "0":
-		 		tree = tree.left
-		 	elif l == "1":
-		 		tree = tree.right
-		 	if tree.key:
-		 		self.data += tree.key
-		 		tree = self.tree
+		'''
+		Decrypte le message fourni (self.e_data).
+		'''
+		tree = self.tree
+		for l in self.e_data:
+			if l == "0":
+				tree = tree.left
+			elif l == "1":
+				tree = tree.right
+			if tree.key:
+				self.data += tree.key
+				tree = self.tree
 
 	def encrypt(self):
 		self.occ()                    # occurence
@@ -201,7 +219,7 @@ if data == f_data:
 else:
 	print("NoooooooooooooooooooooooooooooooooooooooooooooooooooooooooooN")
 print("encode:", len(tu[1]), "raw:", len(f_data))
-print((len(tu[1]) / len(f_data)) * 100)
+print((len(tu[1]) / len(f_data)) * 100, "%")
 
 # if wrt:
 # 	wrt.write(tu[1])
