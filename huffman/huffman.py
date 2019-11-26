@@ -155,23 +155,6 @@ class Huffman():
 		 	if tree.key:
 		 		self.data += tree.key
 		 		tree = self.tree
-		# tree = self.tree
-		# ldata = len(self.e_data) * 8 - 8 - int(self.e_data[0])
-		# self.e_data = self.e_data[1:]
-		# for l in self.e_data:
-		# 	li = ord(l)
-		# 	po = 128
-		# 	while ldata and po >= 1:
-		# 		ldata -= 1
-		# 		ll = int(li / po) % 2
-		# 		if ll == 0:
-		# 			tree = tree.left
-		# 		elif ll == 1:
-		# 			tree = tree.right
-		# 		if tree.key:
-		# 			self.data += tree.key
-		# 			tree = self.tree
-		# 		po /= 2
 
 	def encrypt(self):
 		self.occ()                    # occurence
@@ -196,17 +179,21 @@ try:
 except:
 	f_data = sys.argv[1]
 
-# Encrypt
+# ------- #
+# Encrypt #
+# ------- #
 t = time.time()
 huff = Huffman(f_data)
 tu = huff.encrypt()
-print(time.time() - t)
+print("encode:", time.time() - t)
 
-# Decrypt
+# ------- #
+# Decrypt #
+# ------- #
 t = time.time()
 de = Huffman(e_tree=tu[0], e_data=tu[1])
 data = de.decrypt()
-print(time.time() - t)
+print("decode:", time.time() - t)
 
 print("---------------------------------------------")
 if data == f_data:
