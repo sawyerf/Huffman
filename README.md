@@ -8,12 +8,12 @@ python3 huffman.py [string][file_name]
 ## Example
 
 ```
-echo vache a lait > file
+echo vache à lait > file
 python3 huffman.py file
 ```
 
 ```
-python3 huffman.py "vache a alait"
+python3 huffman.py "vache à lait"
 ```
 
 ## Algo
